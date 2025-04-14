@@ -84,12 +84,22 @@ on:
        required: false
        type: string
 
+     UploadToWeb:
+       required: false
+       type: boolean
+    
+     TeamsWebhook:
+       required: false
+       type: string
+
    secrets:
      UnityCloudBuildApiKey:
        required: true
        
      SlackBotAuthToken: # passing this enables slack reporting
        required: false
+     
+     
        
      AppStoreConnect_Auth_Key:
        required: false
@@ -425,7 +435,17 @@ jobs:
          Key: ${{ secrets.UnityGameServerHosting_Key }}
          Secret: ${{ secrets.UnityGameServerHosting_Secret }}
       
-      
+  UploadToWeb:
+    if: ${{ inputs.UploadToWeb }}
+    name: Upload to Web
+    runs-on: ubuntu-latest
+    needs: Build
+    env:
+      ARTIFACT_FILENAME: ${{needs.Build.outputs.artifact_filename}}
+    steps:
+      - name: Print artifact
+        run: |
+          ls -l ${{ env.ARTIFACT_FILENAME}}
       
       
   ReportToSlack:
@@ -433,7 +453,7 @@ jobs:
    # can we force this to run (always()) AND only if channel is present?
    #if: ${{ inputs.SlackBotChannelId != '' }}
    if: always()
-   needs: [Build,UploadToTestFlight,UploadToMacosTestFlight,UploadToOculusReleaseChannel,UploadToUnityGameServerHosting,UploadToSteam]
+   needs: [Build,UploadToTestFlight,UploadToMacosTestFlight,UploadToOculusReleaseChannel,UploadToUnityGameServerHosting,UploadToSteam,UploadToWeb]
    steps:
     - name: Set SHARE_STRING env
       if: needs.Build.outputs.share_url != ''
@@ -463,6 +483,20 @@ jobs:
        OR_RESULT_STRING: ${{ needs.UploadToOculusReleaseChannel.result == 'success' && ':green_heart:' || ':x:' }} ${{ needs.UploadToOculusReleaseChannel.result }}
       run: |
        echo OCULUSRELEASERESULT_STRING="OculusRelease $OR_RESULT_STRING " >> "$GITHUB_ENV"
+    
+    - name: Set OCULUSRELEASERESULT_STRING_TEAMS env
+      if: ${{ inputs.UploadToOculusReleaseChannel }}
+      env:
+       OR_RESULT_STRING_TEAMS: ${{ needs.UploadToOculusReleaseChannel.result == 'success' && '&#x2705;' || '&#x274c;' }} ${{ needs.UploadToOculusReleaseChannel.result }}
+      run: |
+       echo OCULUSRELEASERESULT_STRING_TEAMS="$OR_RESULT_STRING_TEAMS " >> "$GITHUB_ENV"
+      
+    - name: Set WEBRESULT_STRING_TEAMS env
+      if: ${{ inputs.UploadToWeb }}
+      env:
+       WEB_RESULT_STRING_TEAMS: ${{ needs.UploadToWeb.result == 'success' && '&#x2705;' || '&#x274c;' }} ${{ needs.UploadToWeb.result }}
+      run: |
+       echo WEBESULT_STRING_TEAMS="$WEB_RESULT_STRING_TEAMS " >> "$GITHUB_ENV"
 
     - name: Set UNITYGAMEHOSTINGUPLOADRESULT_STRING env
       if: ${{ inputs.UploadToUnityGameServerHosting }}
@@ -492,3 +526,52 @@ jobs:
       with:
        channel-id: ${{ inputs.SlackBotChannelId }}
        slack-message: "`${{github.repository}}/${{github.github.ref_name}}${{github.workflow}}` Build Result: ${{env.RESULT_STRING}} ${{ env.TESTFLIGHTRESULT_STRING }} ${{ env.OCULUSRELEASERESULT_STRING }} ${{ env.UNITYGAMEHOSTINGUPLOADRESULT_STRING }} ${{ env.UPLOADTOSTEAM_RESULT_STRING }}\n:pencil2: ${{env.COMMIT_STRING}} ${{ env.BRANCH_STRING }} \n:runner: ${{env.RUN_URL}} \n${{ env.SHARE_STRING }}"
+
+    - name: Notify Teams Oculus
+      if: ${{ inputs.UploadToOculusReleaseChannel }}
+      continue-on-error: true
+      run: |
+        curl -X POST ${{ inputs.TeamsWebhook }} \
+          -H "Content-Type: application/json" \
+          -d '{
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "themeColor": "0076D7",
+            "summary": "Oculus - New Build",
+            "sections": [{
+                "activityTitle": "A new build was uploaded to Oculus",
+                "activitySubtitle": "<${{ github.event.pull_request.url || github.event.head_commit.url }}|${{ github.event.pull_request.title || github.event.head_commit.message}}>",
+                "facts": [{
+                    "name": "Unity Build Status",
+                    "value": "${{ needs.Build.result == 'success' && '&#x2705;' || '&#x274c;' }} ${{ needs.Build.result }}"
+                },
+                {
+                    "name": "Oculus Upload Status",
+                    "value": "${{env.OCULUSRELEASERESULT_STRING_TEAMS}}"
+                }]
+            }]
+          }'
+    - name: Notify Teams Web
+      if: ${{ inputs.UploadToWeb }}
+      continue-on-error: true
+      run: |
+        curl -X POST ${{ inputs.TeamsWebhook }} \
+          -H "Content-Type: application/json" \
+          -d '{
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "themeColor": "0076D7",
+            "summary": "Web - New Build",
+            "sections": [{
+                "activityTitle": "A new build was uploaded to Web",
+                "activitySubtitle": "<${{ github.event.pull_request.url || github.event.head_commit.url }}|${{ github.event.pull_request.title || github.event.head_commit.message}}>",
+                "facts": [{
+                    "name": "Unity Build Status",
+                    "value": "${{ needs.Build.result == 'success' && '&#x2705;' || '&#x274c;' }} ${{ needs.Build.result }}"
+                },
+                {
+                    "name": "Web Upload Status",
+                    "value": "${{env.WEBRESULT_STRING_TEAMS}}"
+                }]
+            }]
+          }'
