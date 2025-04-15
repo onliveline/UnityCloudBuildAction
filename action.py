@@ -5,6 +5,7 @@ import sys
 import time
 from pathlib import Path
 from typing import Dict
+from datetime import datetime, timedelta, timezone
 
 import click
 
@@ -173,20 +174,24 @@ class UnityCloudClient:
             "Authorization": f"Basic {self.api_key}",
         }
         
-    def send_request(self, api_url: str) -> Dict:
+    def send_request(self, api_url: str, throws=True) -> Dict:
         headers = self.get_request_headers()
         url = f"{self.api_request_base_url}{api_url}"
         response = requests.get( url, headers=headers, timeout=fetch_timeout_secs )
         
         if response.status_code != 200:
-            raise Exception(f"Request failed with status {response.status_code} content={response.text} with url={url}")
+            if throws:
+                raise Exception(f"Request failed with status {response.status_code} content={response.text} with url={url}")
         data = response.json()
         return data
 
-    def post_request(self, api_url: str, post_body:Dict, success_codes=[200]) -> Dict:
+    def post_request(self, api_url: str, post_body:Dict, success_codes=[200], use_put=False) -> Dict:
         headers = self.get_request_headers()
         url = f"{self.api_request_base_url}{api_url}"
-        response = requests.post( url, headers=headers, timeout=fetch_timeout_secs, data=json.dumps(post_body) )
+        requests_verb = requests.post
+        if use_put:
+             requests_verb = requests.put
+        response = requests_verb( url, headers=headers, timeout=fetch_timeout_secs, data=json.dumps(post_body) )
         
         if not response.status_code in success_codes:
             raise Exception(f"Request failed with status {response.status_code}(not {success_codes}) content={response.text} with url={url}")
@@ -265,6 +270,24 @@ class UnityCloudClient:
         post_body = {'shareExpiry':''}
         share_meta = self.post_request( create_share_url, post_body )
         logger.info(f"Created share {share_meta}")
+        return self.get_share_url_from_share_id( share_meta["shareid"] )
+    
+    def get_share_expiry(self, after_days=30):
+         expiry_date = datetime.now(timezone.utc) + timedelta(days=after_days)
+        #  iso_time = expiry_date.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+         iso_time = expiry_date.isoformat()
+         return str(iso_time)
+
+    def get_or_create_share_url(self, project_id:str, build_target_name: str,build_number: int) -> str:
+        endpoint = f"/projects/{project_id}/buildtargets/{build_target_name}/builds/{build_number}/share"
+        share_meta = self.send_request(endpoint, throws=False)
+        if share_meta.get('error') and "no share" in share_meta['error'].lower():
+            post_body = {'shareExpiry': self.get_share_expiry()} # this doesn't have any effect
+            share_meta = self.post_request( endpoint, post_body )
+            share_meta = self.post_request(endpoint, post_body, use_put=True) # this does the trick
+            logger.info(f"Created share {share_meta}")
+        else:
+             logger.info(f"Already exists share {share_meta}")
         return self.get_share_url_from_share_id( share_meta["shareid"] )
     
     
@@ -680,7 +703,7 @@ def main(
 
     # print out any sharing info to env var
     if create_share:
-        share_url = client.create_share_url( project_id, build_target_name, build_number )
+        share_url = client.get_or_create_share_url( project_id, build_target_name, build_number )
         logger.info(f"Got sharing url {share_url}")
         write_github_output_and_env("SHARE_URL", share_url)
             
