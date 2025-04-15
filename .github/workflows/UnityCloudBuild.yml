@@ -22,6 +22,7 @@ on:
      UnityCloudExistingBuildNumber:
        required: false
        type: string # this should be a number, but to allow the input to be used from a workflow_dispatch input, numbers dont work
+     
 
      DownloadBinaryToArtifact:
        required: false
@@ -98,6 +99,9 @@ on:
        
      SlackBotAuthToken: # passing this enables slack reporting
        required: false
+    
+     PassedGithubToken:
+       required: true
      
      
        
@@ -559,7 +563,7 @@ jobs:
           }'
     - name: Check GitHub token permissions
       run: |
-        curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+        curl -H "Authorization: token ${{ secrets.PassedGithubToken }}" \
               https://api.github.com/rate_limit
     - name: Create GitHub Release
       uses: actions/create-release@v1
@@ -572,4 +576,4 @@ jobs:
 
           View it here: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PassedGithubToken }}
