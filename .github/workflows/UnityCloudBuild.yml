@@ -450,7 +450,7 @@ jobs:
        SHARE_URL: ${{ needs.Build.outputs.share_url }}
        UNITY_CLOUD_BUILD_TARGET: ${{ inputs.UnityCloudBuildTarget }}
       run: |
-       echo "SHARE_STRING=:gift: $UNITY_CLOUD_BUILD_TARGET $SHARE_URL" >> "$GITHUB_ENV"
+       echo "SHARE_STRING=&#x1F381; $UNITY_CLOUD_BUILD_TARGET $SHARE_URL" >> "$GITHUB_ENV"
 
     - name: Set TESTFLIGHTRESULT_STRING env
       if: ${{ inputs.UploadToTestFlight }}
@@ -557,6 +557,10 @@ jobs:
                 }]
             }]
           }'
+    - name: Check GitHub token permissions
+      run: |
+        curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              https://api.github.com/rate_limit
     - name: Create GitHub Release
       uses: actions/create-release@v1
       if: ${{ inputs.UploadToWeb}}
