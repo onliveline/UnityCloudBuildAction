@@ -256,7 +256,8 @@ class UnityCloudClient:
         return None
 
     def get_share_url_from_share_id(self, share_id:str ) -> str:
-        return f"https://developer.cloud.unity3d.com/share/share.html?shareId={share_id}"
+        base_url = "https://cloud.unity.com/public/build-automation/share"
+        return f"{base_url}?shareId={share_id}"
 
     def create_share_url(self, project_id:str, build_target_name: str,build_number: int) -> str:
         # if a share already exists for this build, it will be revoked and a new one created (note: same url as GET share meta)
