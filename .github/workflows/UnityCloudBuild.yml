@@ -462,26 +462,26 @@ jobs:
       - name: Debug Secret Output 1
         run: |
           echo "Raw secret content:"
-          echo '${{ secrets.GoogleServiceAccount }}'
+          echo $MY_GSON
       
       - name: Debug Secret Output 2
         run: |
           echo "hash:"
-          echo -n '${{ secrets.GoogleServiceAccount }}' | sha256sum
+          echo -n $MY_GSON | sha256sum
 
       - name: Debug Secret Output 3
         run: |
           echo "char count"
-          cat "${{ secrets.GoogleServiceAccount }}" | wc -c
+          cat "$MY_GSON" | wc -c
 
       - name: Debug Secret Output 4
         run: |
           echo "line count"
-          cat "${{ secrets.GoogleServiceAccount }}" | wc -l
+          cat "$MY_GSON" | wc -l
       
       - name: Validate JSON secret
         run: |
-          echo '${{ secrets.GoogleServiceAccount }}' | jq .
+          echo "$MY_GSON" | jq .
 
       - name: Upload to Google Play
         uses: r0adkll/upload-google-play@v1

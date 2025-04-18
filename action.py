@@ -518,7 +518,6 @@ def wait_for_successfull_build(client: UnityCloudClient, project_id:str, build_t
     max_timeouts_in_a_row = 6
     
     while timeout_count < max_timeouts_in_a_row:
-        time.sleep(polling_interval)
 
         try:
             build_meta = client.get_build_meta( project_id, build_target_name, build_number )
