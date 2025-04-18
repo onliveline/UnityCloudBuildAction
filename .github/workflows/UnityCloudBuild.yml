@@ -453,11 +453,31 @@ jobs:
       #     ls -l ./
       #     unzip ${{ env.ARTIFACT_FILENAME }} -d "BuildFiles" -x "*DoNotShip*" "*DontShip*"
       #     echo ArtifactPath="BuildFiles" >> "$GITHUB_OUTPUT"
+      - name: Keep google json in env
+        env:
+          MY_GSON: ${{secrets.GoogleServiceAccount}}
+        run: |
+          echo $MY_GSON
 
-      - name: Debug Secret Output
+      - name: Debug Secret Output 1
         run: |
           echo "Raw secret content:"
           echo '${{ secrets.GoogleServiceAccount }}'
+      
+      - name: Debug Secret Output 2
+        run: |
+          echo "hash:"
+          echo -n '${{ secrets.GoogleServiceAccount }}' | sha256sum
+
+      - name: Debug Secret Output 3
+        run: |
+          echo "char count"
+          cat "${{ secrets.GoogleServiceAccount }}" | wc -c
+
+      - name: Debug Secret Output 4
+        run: |
+          echo "line count"
+          cat "${{ secrets.GoogleServiceAccount }}" | wc -l
       
       - name: Validate JSON secret
         run: |
