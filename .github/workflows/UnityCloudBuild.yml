@@ -258,7 +258,7 @@ jobs:
         with:
           app-path: ${{env.ARTIFACT_FILENAME}}
           issuer-id: ${{env.APPSTORECONNECT_AUTH_ISSUER}}
-          api-key-id: ${{env.AppStoreConnect_Auth_Key}}
+          api-key-id: ${{env.APPSTORECONNECT_AUTH_KEY}}
           api-private-key: ${{env.APPSTORECONNECT_AUTH_P8_BASE64}}
           
   UploadToOculusReleaseChannel:
