@@ -90,6 +90,10 @@ on:
       UploadToGooglePlay:
         required: false
         type: boolean
+      
+      GooglePlayTrack:
+        required: false
+        type: string
 
       TeamsWebhook:
         required: false
@@ -138,7 +142,10 @@ on:
 
       SteamConfigVdfBase64: # base64 encoded config.vdf from steamcmd https://github.com/game-ci/steam-deploy (see readme)
         required: false
-
+      
+      GoogleServiceAccount:
+          required: false
+        
       EmailUsername:
         required: false
       EmailPassword:
@@ -459,25 +466,18 @@ jobs:
         run: |
           [ -z "$ARTIFACT_FILENAME" ] && echo "ARTIFACT_FILENAME env var is empty" && exit 1
           echo "Unzipping artifact; ${{ env.ARTIFACT_FILENAME }}..."
+          ls -l ${{ env.ARTIFACT_FILENAME }}
           ls -l ./
           unzip ${{ env.ARTIFACT_FILENAME }} -d "BuildFiles" -x "*DoNotShip*" "*DontShip*"
           echo ArtifactPath="BuildFiles" >> "$GITHUB_OUTPUT"
 
-      # - name: Format Steam Build Description
-      #   id: SteamBuildDescription
-      #   run: |
-      #     echo BuildDescription="${{ github.ref }} ${{ github.sha }}" >> $GITHUB_OUTPUT
-
-      # - name: Deploy to Steam
-      #   uses: game-ci/steam-deploy@v3 # v3 doesn't need ssfn
-      #   with:
-      #     username: ${{ inputs.SteamUsername }}
-      #     configVdf: ${{ secrets.SteamConfigVdfBase64 }}
-      #     appId: ${{ inputs.SteamAppId }}
-      #     buildDescription: ${{ steps.SteamBuildDescription.outputs.BuildDescription }}
-      #     rootPath: "."
-      #     depot1Path: ${{ steps.UnzipArtifacts.outputs.ArtifactPath }}
-      #     releaseBranch: ${{ inputs.SteamBranch }}
+      - name: Upload to Google Play
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GoogleServiceAccount }}
+          packageName: de.onxt.BoneEaters
+          releaseFiles: ${{ steps.UnzipArtifacts.outputs.ArtifactPath }}
+          track: ${{inputs.GooglePlayTrack}}
 
   ReportToSlack:
     runs-on: ubuntu-22.04
