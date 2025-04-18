@@ -472,12 +472,12 @@ jobs:
       - name: Debug Secret Output 3
         run: |
           echo "char count"
-          cat "$MY_GSON" | wc -c
+          echo "$MY_GSON" | wc -c
 
       - name: Debug Secret Output 4
         run: |
           echo "line count"
-          cat "$MY_GSON" | wc -l
+          echo "$MY_GSON" | wc -l
       
       - name: Validate JSON secret
         run: |
