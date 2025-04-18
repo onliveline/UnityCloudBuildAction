@@ -253,31 +253,14 @@ jobs:
         with:
           name: ${{ env.ARTIFACT_FILENAME }}
 
-      # put the authkey p8 in private_keys/ in the filename altool expects
-      - name: Get Auth Key.P8
-        # xxx.p8 no such file or directory, means you cannot pipe to a file in a directory that doesnt exist
-        run: |
-          mkdir -p ./private_keys
-          echo "$APPSTORECONNECT_AUTH_P8_BASE64" | base64 -d > ./private_keys/AuthKey_$APPSTORECONNECT_AUTH_KEY.p8
-
-      # for debugging any errors below, print out the bundle version from the IPA/plist
-      - name: Print Bundle Version
-        continue-on-error: true
-        env:
-          UNZIPPED_PATH: "$GITHUB_WORKSPACE/UnzippedIpa"
-        # command used on mac; requires absolute path! defaults read "$(find $(pwd)/unzipped_ipa/Payload/Showcase.app -name '*.app')/Info.plist" CFBundleShortVersionString
-        run: |
-          unzip -d $UNZIPPED_PATH ${{ env.ARTIFACT_FILENAME }}
-          defaults read "$(find $UNZIPPED_PATH -name '*.app')/Info.plist" CFBundleShortVersionString
-
-      - name: Upload .ipa to TestFlight
-        env:
-          IosBundleId: "xxx" # todo: extract from ipa. altool doesn't seem to need this to be correct
-          IosBundleVersion: 0 # doesnt seem to need this to be correct. altool uses data in the ipa
-          IosBundleShortVersionString: "yyy" # doesnt seem to need this to be correct. altool uses data in the ipa
-        run: |
-          xcrun altool --upload-app --file ${{ env.ARTIFACT_FILENAME }} --type ios --bundle-id ${{ env.IosBundleId }} --bundle-version ${{ env.IosBundleVersion }} --bundle-short-version-string ${{ env.IosBundleShortVersionString }} --apiKey ${APPSTORECONNECT_AUTH_KEY} --apiIssuer ${APPSTORECONNECT_AUTH_ISSUER}
-
+      - name: Upload app to TestFlight
+        uses: Apple-Actions/upload-testflight-build@v3.0.0
+        with:
+          app-path: ${{env.ARTIFACT_FILENAME}}
+          issuer-id: ${{env.APPSTORECONNECT_AUTH_ISSUER}}
+          api-key-id: ${{env.AppStoreConnect_Auth_Key}}
+          api-private-key: ${{env.APPSTORECONNECT_AUTH_P8_BASE64}}
+          
   UploadToOculusReleaseChannel:
     if: ${{ inputs.UploadToOculusReleaseChannel }}
     name: Upload to Oculus Release Channel
