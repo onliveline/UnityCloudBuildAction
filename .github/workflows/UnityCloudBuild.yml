@@ -455,7 +455,7 @@ jobs:
       #     echo ArtifactPath="BuildFiles" >> "$GITHUB_OUTPUT"
       
       - name: Validate JSON secret
-        run: echo "${{ secrets.GoogleServiceAccount }}" | jq .
+        run: echo '${{ secrets.GoogleServiceAccount }}' | jq .
 
       - name: Upload to Google Play
         uses: r0adkll/upload-google-play@v1
