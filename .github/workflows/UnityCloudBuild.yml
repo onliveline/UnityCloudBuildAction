@@ -613,7 +613,7 @@ jobs:
         with:
           server_address: smtp.gmail.com
           server_port: 465
-          secure: true
+          secure: false
           username: ${{secrets.EmailUsername}}
           password: ${{secrets.EmailPassword}}
           subject: A new build is available
