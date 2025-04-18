@@ -453,9 +453,15 @@ jobs:
       #     ls -l ./
       #     unzip ${{ env.ARTIFACT_FILENAME }} -d "BuildFiles" -x "*DoNotShip*" "*DontShip*"
       #     echo ArtifactPath="BuildFiles" >> "$GITHUB_OUTPUT"
+
+      - name: Debug Secret Output
+        run: |
+          echo "Raw secret content:"
+          echo '${{ secrets.GoogleServiceAccount }}'
       
       - name: Validate JSON secret
-        run: echo '${{ secrets.GoogleServiceAccount }}' | jq .
+        run: |
+          echo '${{ secrets.GoogleServiceAccount }}' | jq .
 
       - name: Upload to Google Play
         uses: r0adkll/upload-google-play@v1
