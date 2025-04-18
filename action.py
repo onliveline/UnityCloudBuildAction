@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 GITHUB_WORKSPACE = os.getenv('GITHUB_WORKSPACE')
 # for local testing, could fall back to ./
 if not GITHUB_WORKSPACE:
-	raise Exception(f"GITHUB_WORKSPACE env variable is empty. Expecting this to be a directory")
+    raise Exception(f"GITHUB_WORKSPACE env variable is empty. Expecting this to be a directory")
 
 # write out meta back to workflow via github output vars
 # if no env var, write to a local file for debugging
@@ -56,25 +56,25 @@ write_github_output_and_env("github_output_test_key","test_value")
 
 #	logger.info(f"Json, but pretty {pretty_json(Dictionary)}")
 def pretty_json(Json:dict):
-	return json.dumps(
-		Json,
-		sort_keys=False,
-		indent=4,
-		separators=(',', ': ')
-	)
+    return json.dumps(
+        Json,
+        sort_keys=False,
+        indent=4,
+        separators=(',', ': ')
+    )
 
 
 
 
 
 class BranchAndLabel:
-	def __init__(
-		self,
-		branch: str,
-		label: str,
-	) -> None:
-		self.branch = branch
-		self.label = label
+    def __init__(
+        self,
+        branch: str,
+        label: str,
+    ) -> None:
+        self.branch = branch
+        self.label = label
 
 
 #	given git inputs (branch_ref and/or head_ref) - filter down to the branch we want to use
@@ -87,36 +87,36 @@ class BranchAndLabel:
 #	and return a .label...
 #		that will be used as the name of the build target
 def get_branch_and_label(branch_ref,head_ref):
-	
-	if not branch_ref:
-		raise Exception(f"get_branch_and_label requires branch_ref (is {branch_ref})")
+    
+    if not branch_ref:
+        raise Exception(f"get_branch_and_label requires branch_ref (is {branch_ref})")
 
-	# gr: is this redundant, and always true if head_ref != empty?
-	is_pull_request = branch_ref.startswith("refs/pull/")
+    # gr: is this redundant, and always true if head_ref != empty?
+    is_pull_request = branch_ref.startswith("refs/pull/")
 
-	if is_pull_request and not head_ref:
-		raise Exception(f"Detected pull request from {branch_ref} but missing github_head_ref '{head_ref}' which should be the source branch")
+    if is_pull_request and not head_ref:
+        raise Exception(f"Detected pull request from {branch_ref} but missing github_head_ref '{head_ref}' which should be the source branch")
 
-	# need to strip branch name down to what will be passed to git clone --branch XXX in unity cloud build
-	# 	git clone --branch xxxx
-	#		this does NOT work for pull requests; refs/pull/6/merge; refs/tag/xxx
-	#		for pull requests, we need to use head_ref
-	branch = branch_ref
-	branch = branch.replace("refs/tags/", "")
-	branch = branch.replace("refs/heads/", "")
-	branch = branch.replace("refs/pull/", "pull request ")
+    # need to strip branch name down to what will be passed to git clone --branch XXX in unity cloud build
+    # 	git clone --branch xxxx
+    #		this does NOT work for pull requests; refs/pull/6/merge; refs/tag/xxx
+    #		for pull requests, we need to use head_ref
+    branch = branch_ref
+    branch = branch.replace("refs/tags/", "")
+    branch = branch.replace("refs/heads/", "")
+    branch = branch.replace("refs/pull/", "pull request ")
 
-	# for pull requests the label wants to be branch_ref to indicate it's a pr
-	label = branch
+    # for pull requests the label wants to be branch_ref to indicate it's a pr
+    label = branch
 
-	# strip the head ref down to a branch, in case we use it
-	head_ref = head_ref or ""
-	head_ref = head_ref.replace("refs/heads/", "")
+    # strip the head ref down to a branch, in case we use it
+    head_ref = head_ref or ""
+    head_ref = head_ref.replace("refs/heads/", "")
 
-	if is_pull_request:
-		branch = head_ref
+    if is_pull_request:
+        branch = head_ref
 
-	return BranchAndLabel( branch, label )
+    return BranchAndLabel( branch, label )
 
 
 
@@ -125,27 +125,27 @@ def get_branch_and_label(branch_ref,head_ref):
 #		ie. we dont get "mac-main", just "mac"
 #		but at this point we are still dealing with strings
 def get_build_targetname(primary_build_target,branch_and_label):
-	
-	if not primary_build_target:
-		raise Exception(f"get_build_target_name() requires primary_build_target")
-	if not branch_and_label:
-		raise Exception(f"get_build_target_name() requires branch_and_label")
+    
+    if not primary_build_target:
+        raise Exception(f"get_build_target_name() requires primary_build_target")
+    if not branch_and_label:
+        raise Exception(f"get_build_target_name() requires branch_and_label")
 
-	#	sanitise label for unity cloud build's restrictions
-	target_name = branch_and_label.label
-	# replace any special chars and ensure length is max of 56 chars
-	# 64 is the limit, but we allow some free chars for platform
-	# todo: just do 64-(prefix-length)
-	target_name = re.sub("[^0-9a-zA-Z]+", "-", target_name)
-	target_name = f"{primary_build_target}-{target_name}"
-	# 64 char limit for targets (citation needed)
-	target_name = target_name[:63]
-	# targets must be lower case
-	target_name = target_name.lower()
-	
-	return target_name
-	
-	
+    #	sanitise label for unity cloud build's restrictions
+    target_name = branch_and_label.label
+    # replace any special chars and ensure length is max of 56 chars
+    # 64 is the limit, but we allow some free chars for platform
+    # todo: just do 64-(prefix-length)
+    target_name = re.sub("[^0-9a-zA-Z]+", "-", target_name)
+    target_name = f"{primary_build_target}-{target_name}"
+    # 64 char limit for targets (citation needed)
+    target_name = target_name[:63]
+    # targets must be lower case
+    target_name = target_name.lower()
+    
+    return target_name
+    
+    
 
 
 # client that just connects to unity cloud build and does standard calls
@@ -469,87 +469,89 @@ class UnityCloudBuilder:
 
 
 def download_file_to_workspace(url: str) -> Dict:
-	logger.info(f"Downloading file to workspace ({GITHUB_WORKSPACE})... {url}")
-	
-	response = requests.get(url, allow_redirects=True)
-	if response.status_code != 200:
-		raise Exception(f"Request failed with status {response.status_code} content={response.text} with url={url}")
+    logger.info(f"Downloading file to workspace ({GITHUB_WORKSPACE})... {url}")
+    
+    response = requests.get(url, allow_redirects=True)
+    if response.status_code != 200:
+        raise Exception(f"Request failed with status {response.status_code} content={response.text} with url={url}")
 
-	#	find filename from response
-	filename = response.headers.get('content-disposition') or ""
-	if filename.startswith("attachment; filename="):
-		filename = filename.replace("attachment; filename=","")
-	else:
-		raise Exception("Dont know how to get filename from url/response (no content-disposition")
+    #	find filename from response
+    filename = response.headers.get('content-disposition') or ""
+    if filename.startswith("attachment; filename="):
+        filename = filename.replace("attachment; filename=","")
+    else:
+        raise Exception("Dont know how to get filename from url/response (no content-disposition")
 
-	# files must be written inside the GITHUB_WORKSPACE
-	filepath = Path( GITHUB_WORKSPACE ) / "artifacts" / filename
-	filepath_absolute = filepath.absolute()
-	if not filepath.is_relative_to(GITHUB_WORKSPACE):
-		logger.warning(f"filepath({filepath_absolute} is not relative to GITHUB_WORKSPACE({GITHUB_WORKSPACE})")
+    # files must be written inside the GITHUB_WORKSPACE
+    filepath = Path( GITHUB_WORKSPACE ) / "artifacts" / filename
+    filepath_absolute = filepath.absolute()
+    if not filepath.is_relative_to(GITHUB_WORKSPACE):
+        logger.warning(f"filepath({filepath_absolute} is not relative to GITHUB_WORKSPACE({GITHUB_WORKSPACE})")
 
-	directory = filepath.parent
-	directory.mkdir(parents=True,exist_ok=True)
-	try:
-		logger.info(f"Writing download to {filepath_absolute}...")
-		filepath.write_bytes(response.content)
-	except IOError as exception:
-		raise Exception(f"Could not file download to disk ({filepath_absolute}): {exception}")
+    directory = filepath.parent
+    directory.mkdir(parents=True,exist_ok=True)
+    try:
+        logger.info(f"Writing download to {filepath_absolute}...")
+        filepath.write_bytes(response.content)
+    except IOError as exception:
+        raise Exception(f"Could not file download to disk ({filepath_absolute}): {exception}")
 
-	# need to output a github_workspace relative path
-	workspacefilepath = str( filepath.relative_to(GITHUB_WORKSPACE) )
-	meta = { "filename":filename, "filepath":workspacefilepath}
-	logger.info(f"Download to {meta['filepath']} successful!")
-	return meta
+    # need to output a github_workspace relative path
+    workspacefilepath = str( filepath.relative_to(GITHUB_WORKSPACE) )
+    meta = { "filename":filename, "filepath":workspacefilepath}
+    logger.info(f"Download to {meta['filepath']} successful!")
+    return meta
 
 
 def is_useful_build_meta_key(key: str):
-	if "InSeconds" in key:
-		return True
-	if "tatus" in key:
-		return True
+    if "InSeconds" in key:
+        return True
+    if "tatus" in key:
+        return True
 
-	return False
+    return False
 
 def wait_for_successfull_build(client: UnityCloudClient, project_id:str, build_target_name:str, build_number:int, polling_interval:float ):
-	
-	#	gr: reset the timeout count whenever there's a successfull response so we stick around over blips
-	timeout_count = 0
-	max_timeouts_in_a_row = 6
-	
-	while timeout_count < max_timeouts_in_a_row:
-		time.sleep(polling_interval)
+    
+    #	gr: reset the timeout count whenever there's a successfull response so we stick around over blips
+    timeout_count = 0
+    max_timeouts_in_a_row = 6
+    
+    while timeout_count < max_timeouts_in_a_row:
+        time.sleep(polling_interval)
 
-		try:
-			build_meta = client.get_build_meta( project_id, build_target_name, build_number )
-			# non-erroring fetch, so reset timeout
-			timeout_count = 0
+        try:
+            build_meta = client.get_build_meta( project_id, build_target_name, build_number )
+            # non-erroring fetch, so reset timeout
+            timeout_count = 0
 
-		# catch timeouts, but anything else should throw
-		except requests.exceptions.Timeout:
-			logger.info(f"Timeout fetching build meta ({timeout_count}/{max_timeouts_in_a_row} tries). Waiting {polling_interval} secs...")
-			timeout_count = timeout_count+1
-			continue
+        # catch timeouts, but anything else should throw
+        except requests.exceptions.Timeout:
+            logger.info(f"Timeout fetching build meta ({timeout_count}/{max_timeouts_in_a_row} tries). Waiting {polling_interval} secs...")
+            timeout_count = timeout_count+1
+            time.sleep(polling_interval)
+            continue
 
-		#	print out useful information!
-		failed_statuses = ["failure", "canceled", "cancelled", "unknown"]
-		success_statuses = ["success"]
-		status = build_meta["buildStatus"]
+        #	print out useful information!
+        failed_statuses = ["failure", "canceled", "cancelled", "unknown"]
+        success_statuses = ["success"]
+        status = build_meta["buildStatus"]
 
-		useful_meta = {}
-		for key,value in build_meta.items():
-			if is_useful_build_meta_key(key):
-				useful_meta[key] = value
+        useful_meta = {}
+        for key,value in build_meta.items():
+            if is_useful_build_meta_key(key):
+                useful_meta[key] = value
 
-		if status in success_statuses:
-			logger.info(f"Build {project_id}/{build_target_name}/{build_number} completed successfully; {pretty_json(useful_meta)}")
-			return build_meta
+        if status in success_statuses:
+            logger.info(f"Build {project_id}/{build_target_name}/{build_number} completed successfully; {pretty_json(useful_meta)}")
+            return build_meta
 
-		if status in failed_statuses:
-			logger.info(f"Build {status} meta: {pretty_json(build_meta)}")
-			raise Exception(f"Build {project_id}/{build_target_name}/{build_number} failed with status: {status}")
+        if status in failed_statuses:
+            logger.info(f"Build {status} meta: {pretty_json(build_meta)}")
+            raise Exception(f"Build {project_id}/{build_target_name}/{build_number} failed with status: {status}")
 
-		logger.info(f"Build not finished ({status})... {pretty_json(useful_meta)}")
+        logger.info(f"Build not finished ({status})... {pretty_json(useful_meta)}")
+        time.sleep(polling_interval)
 
 
 
