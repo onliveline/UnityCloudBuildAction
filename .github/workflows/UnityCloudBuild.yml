@@ -453,6 +453,9 @@ jobs:
       #     ls -l ./
       #     unzip ${{ env.ARTIFACT_FILENAME }} -d "BuildFiles" -x "*DoNotShip*" "*DontShip*"
       #     echo ArtifactPath="BuildFiles" >> "$GITHUB_OUTPUT"
+      
+      - name: Validate JSON secret
+        run: echo "${{ secrets.GoogleServiceAccount }}" | jq .
 
       - name: Upload to Google Play
         uses: r0adkll/upload-google-play@v1
@@ -611,8 +614,8 @@ jobs:
           server_address: smtp.gmail.com
           server_port: 465
           secure: true
-          username: ${{secrets.EMAIL_USERNAME}}
-          password: ${{secrets.EMAIL_PASSWORD}}
+          username: ${{secrets.EmailUsername}}
+          password: ${{secrets.EmailPassword}}
           subject: A new build is available
           to: ${{inputs.EmailRecipients}}
           from: Build Automation
