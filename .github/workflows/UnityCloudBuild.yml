@@ -476,7 +476,7 @@ jobs:
 
       - name: Set Unity Cloud Build Status String
         env:
-          STATUS_STRING: ${{ inputs.UnityCloudBuildTarget }} ${{ needs.Build.result == 'success' && '&#x2705;' || '&#x274c;' }} ${{ needs.Build.result }}
+          STATUS_STRING: ${{ inputs.UnityCloudBuildTarget }} ${{ needs.Build.result == 'success' && '✅' || '❌'}} ${{ needs.Build.result }}
         run: |
           echo UNITY_CLOUD_BUILD_STATUS_STRING="$STATUS_STRING" >> "$GITHUB_ENV"
       - name: Set TESTFLIGHTRESULT_STRING env
