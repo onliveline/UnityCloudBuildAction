@@ -678,7 +678,7 @@ def main(
     
     # when we have an existing build number, we don't need a lot of the other meta
     # todo: if user supplied build number AND other meta, validate that meta and throw if there's a mismatch
-    if existing_build_number != None:
+    if existing_build_number != None and existing_build_number > 0:
        build_number = existing_build_number
        logger.info(f"Using existing build target/number {build_target_name}/{build_number}...")
        
