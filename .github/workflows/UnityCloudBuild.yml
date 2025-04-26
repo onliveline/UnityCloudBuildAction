@@ -573,7 +573,6 @@ jobs:
             echo "<tr><td style='border: 1px solid #ddd; padding: 8px;'>$TF_RESULT_HEADER</td>                <td style='border: 1px solid #ddd; padding: 8px;'>$TF_RESULT_VALUE                                                </td></tr>"
             echo "<tr><td style='border: 1px solid #ddd; padding: 8px;'>Version</td>                          <td style='border: 1px solid #ddd; padding: 8px;'>$VERSION                                                        </td></tr>"
             echo "<tr><td style='border: 1px solid #ddd; padding: 8px;'>Build Code</td>                       <td style='border: 1px solid #ddd; padding: 8px;'>$CODE                                                           </td></tr>"
-            echo "<tr><td style='border: 1px solid #ddd; padding: 8px;'>Try at</td>                           <td style='border: 1px solid #ddd; padding: 8px;'><a href='$TF_TESTING_LINK' target='_blank'>$GP_TESTING_LINK</a> </td></tr>"
             echo "</tbody>"
             echo "</table>"
             echo "EOF"
