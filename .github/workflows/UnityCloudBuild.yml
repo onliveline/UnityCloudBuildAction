@@ -527,7 +527,7 @@ jobs:
           GP_TESTING_LINK: ${{inputs.GooglePlayTestUrl}}
         run: |
           VERSION=$(grep "bundleVersion:" ProjectSettings/ProjectSettings.asset | sed 's/.*: //')
-          CODE=$(grep -A4 "buildNumber:" ProjectSettings/ProjectSettings.asset | grep "iPhone:" | sed 's/.*: //')
+          CODE=$(grep "AndroidBundleVersionCode:" ProjectSettings/ProjectSettings.asset | sed 's/.*: //')
           echo "RESULT_SUBJECT=$(basename "$GITHUB_REPOSITORY") Android Build Status" >> "$GITHUB_ENV"
           {
             echo "RESULT_HTML_BODY<<EOF"
@@ -557,7 +557,7 @@ jobs:
           TF_RESULT_VALUE: ${{ needs.UploadToTestFlight.result == 'success' && '✅' || '❌' }} ${{ needs.UploadToTestFlight.result }}
         run: |
           VERSION=$(grep "bundleVersion:" ProjectSettings/ProjectSettings.asset | sed 's/.*: //')
-          CODE=$(grep "iOSBuildNumber:" ProjectSettings/ProjectSettings.asset | sed 's/.*: //')
+          CODE=$(grep -A4 "buildNumber:" ProjectSettings/ProjectSettings.asset | grep "iPhone:" | sed 's/.*: //')
           echo "RESULT_SUBJECT=$(basename "$GITHUB_REPOSITORY") iOS Build Status" >> "$GITHUB_ENV"
           {
             echo "RESULT_HTML_BODY<<EOF"
