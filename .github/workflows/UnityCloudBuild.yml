@@ -481,8 +481,12 @@ jobs:
       - name: Set Unity Cloud Build Status String
         env:
           STATUS_STRING: Unity Cloud Build ${{ needs.Build.result == 'success' && '✅' || '❌'}} ${{ needs.Build.result }}
+          STATUS_HEADER: Unity Cloud Build
+          STATUS_VALUE: ${{ needs.Build.result == 'success' && '✅' || '❌'}} ${{ needs.Build.result }}
         run: |
           echo UNITY_CLOUD_BUILD_STATUS_STRING="$STATUS_STRING" >> "$GITHUB_ENV"
+          echo UNITY_CLOUD_BUILD_STATUS_HEADER="$STATUS_HEADER" >> "$GITHUB_ENV"
+          echo UNITY_CLOUD_BUILD_STATUS_VALUE="$STATUS_VALUE" >> "$GITHUB_ENV"
       - name: Checkout the code for parsing verion infos
         uses: actions/checkout@v4
       - name: Set TESTFLIGHTRESULT_STRING env
@@ -517,6 +521,8 @@ jobs:
         if: ${{ inputs.UploadToGooglePlay }}
         env:
           GP_RESULT_STRING: Google Play Upload ${{ needs.UploadToGooglePlay.result == 'success' && '✅' || '❌' }} ${{ needs.UploadToGooglePlay.result }}
+          GP_RESULT_HEADER: Google Play Upload
+          GP_RESULT_VALUE: ${{ needs.UploadToGooglePlay.result == 'success' && '✅' || '❌' }} ${{ needs.UploadToGooglePlay.result }}
           GP_TESTING_LINK: ${{inputs.GooglePlayTestUrl}}
         run: |
           VERSION=$(grep "bundleVersion:" ProjectSettings/ProjectSettings.asset | sed 's/.*: //')
@@ -525,6 +531,22 @@ jobs:
           echo "BUILD_CODE=$CODE" >> "$GITHUB_ENV"
           echo "RESULT_SUBJECT=$(basename "$GITHUB_REPOSITORY") Android Build Status" >> "$GITHUB_ENV"
           echo RESULT_BODY="$UNITY_CLOUD_BUILD_STATUS_STRING | $GP_RESULT_STRING | Version: $VERSION | Build Code: $CODE | <br/> Try at $GP_TESTING_LINK" >> "$GITHUB_ENV"
+          echo "<table><tbody>" >> email
+          echo "<tr><th>$UNITY_CLOUD_BUILD_STATUS_HEADER</th><td>$UNITY_CLOUD_BUILD_STATUS_VALUE</td></tr>" >> email
+          echo "<tr><th>$GP_RESULT_HEADER</th><td>$GP_RESULT_VALUE</td></tr>" >> email
+          echo "<tr><th>Version</th><td>$VERSION</td></tr>" >> email
+          echo "<tr><th>Build Code</th><td>$CODE</td></tr>" >> email
+          echo "</tbody></table>" >> email
+          {
+            echo "RESULT_HTML_BODY<<EOF"
+            echo "<table><tbody>"
+            echo "<tr><th>$UNITY_CLOUD_BUILD_STATUS_HEADER</th><td>$UNITY_CLOUD_BUILD_STATUS_VALUE</td></tr>"
+            echo "<tr><th>$GP_RESULT_HEADER</th><td>$GP_RESULT_VALUE</td></tr>"
+            echo "<tr><th>Version</th><td>$VERSION</td></tr>"
+            echo "<tr><th>Build Code</th><td>$CODE</td></tr>"
+            echo "</tbody></table>"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
 
       - name: Set UNITYGAMEHOSTINGUPLOADRESULT_STRING env
         if: ${{ inputs.UploadToUnityGameServerHosting }}
@@ -631,5 +653,5 @@ jobs:
           subject: ${{ env.RESULT_SUBJECT}}
           to: ${{inputs.EmailRecipients}}
           from: Build Automation
-          html_body: ${{env.RESULT_BODY}}
+          html_body: ${{env.RESULT_HTML_BODY}}
           convert_markdown: true
