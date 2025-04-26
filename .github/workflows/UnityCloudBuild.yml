@@ -631,5 +631,5 @@ jobs:
           subject: ${{ env.RESULT_SUBJECT}}
           to: ${{inputs.EmailRecipients}}
           from: Build Automation
-          body: ${{env.RESULT_BODY}}
+          html_body: ${{env.RESULT_BODY}}
           convert_markdown: true
