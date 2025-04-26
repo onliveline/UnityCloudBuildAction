@@ -190,6 +190,7 @@ jobs:
           name: ${{ steps.build.outputs.ARTIFACT_FILENAME }}
           path: ${{ steps.build.outputs.ARTIFACT_FILEPATH }}
           if-no-files-found: error
+          retention-days: 1
 
   UploadToMacosTestFlight:
     if: ${{ inputs.UploadToMacosTestFlight }}
