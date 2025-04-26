@@ -94,6 +94,10 @@ on:
       GooglePlayTrack:
         required: false
         type: string
+      
+      GooglePlayTestUrl:
+        required: false
+        type: string
 
       TeamsWebhook:
         required: false
@@ -513,13 +517,14 @@ jobs:
         if: ${{ inputs.UploadToGooglePlay }}
         env:
           GP_RESULT_STRING: Google Play Upload ${{ needs.UploadToGooglePlay.result == 'success' && '✅' || '❌' }} ${{ needs.UploadToGooglePlay.result }}
+          GP_TESTING_LINK: ${{inputs.GooglePlayTestUrl}}
         run: |
           VERSION=$(grep "bundleVersion:" ProjectSettings/ProjectSettings.asset | sed 's/.*: //')
           CODE=$(grep "AndroidBundleVersionCode:" ProjectSettings/ProjectSettings.asset | sed 's/.*: //')
           echo "BUILD_VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "BUILD_CODE=$CODE" >> "$GITHUB_ENV"
           echo "RESULT_SUBJECT=$(basename "$GITHUB_REPOSITORY") Android Build Status" >> "$GITHUB_ENV"
-          echo RESULT_BODY="$UNITY_CLOUD_BUILD_STATUS_STRING | $GP_RESULT_STRING | $VERSION ($CODE)" >> "$GITHUB_ENV"
+          echo RESULT_BODY="$UNITY_CLOUD_BUILD_STATUS_STRING | $GP_RESULT_STRING | $VERSION ($CODE) | Try at $GP_TESTING_LINK" >> "$GITHUB_ENV"
 
       - name: Set UNITYGAMEHOSTINGUPLOADRESULT_STRING env
         if: ${{ inputs.UploadToUnityGameServerHosting }}
