@@ -510,10 +510,10 @@ jobs:
       - name: Set Email Subject and Body For Google Play
         if: ${{ inputs.UploadToGooglePlay }}
         env:
-          GP_RESULT_STRING: ${{ needs.UploadToGooglePlay.result == 'success' && '&#x2705;' || '&#x274c;' }} ${{ needs.UploadToGooglePlay.result }}
+          GP_RESULT_STRING: ${{ needs.UploadToGooglePlay.result == 'success' && '✅' || '❌' }} ${{ needs.UploadToGooglePlay.result }}
         run: |
           echo "RESULT_SUBJECT=$(basename "$GITHUB_REPOSITORY") Android Build Status" >> "$GITHUB_ENV"
-          echo RESULT_BODY="$UNITY_CLOUD_BUILD_STATUS_STRING $GP_RESULT_STRING" >> "$GITHUB_ENV"
+          echo RESULT_BODY="$UNITY_CLOUD_BUILD_STATUS_STRING | $GP_RESULT_STRING" >> "$GITHUB_ENV"
 
       - name: Set UNITYGAMEHOSTINGUPLOADRESULT_STRING env
         if: ${{ inputs.UploadToUnityGameServerHosting }}
