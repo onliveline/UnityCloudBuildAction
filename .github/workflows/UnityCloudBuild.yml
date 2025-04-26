@@ -442,47 +442,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.ARTIFACT_FILENAME }}
-
-      # -x excludes patterns when unzipping
-      # - name: Unzip Artifact
-      #   id: UnzipArtifacts
-      #   run: |
-      #     [ -z "$ARTIFACT_FILENAME" ] && echo "ARTIFACT_FILENAME env var is empty" && exit 1
-      #     echo "Unzipping artifact; ${{ env.ARTIFACT_FILENAME }}..."
-      #     ls -l ${{ env.ARTIFACT_FILENAME }}
-      #     ls -l ./
-      #     unzip ${{ env.ARTIFACT_FILENAME }} -d "BuildFiles" -x "*DoNotShip*" "*DontShip*"
-      #     echo ArtifactPath="BuildFiles" >> "$GITHUB_OUTPUT"
-      - name: Keep google json in env
-        env:
-          MY_GSON: ${{secrets.GoogleServiceAccount}}
-        run: |
-          echo $MY_GSON
-
-      - name: Debug Secret Output 1
-        run: |
-          echo "Raw secret content:"
-          echo $MY_GSON
-      
-      - name: Debug Secret Output 2
-        run: |
-          echo "hash:"
-          echo -n $MY_GSON | sha256sum
-
-      - name: Debug Secret Output 3
-        run: |
-          echo "char count"
-          echo "$MY_GSON" | wc -c
-
-      - name: Debug Secret Output 4
-        run: |
-          echo "line count"
-          echo "$MY_GSON" | wc -l
-      
-      - name: Validate JSON secret
-        run: |
-          echo "$MY_GSON" | jq .
-
       - name: Upload to Google Play
         uses: r0adkll/upload-google-play@v1
         with:
@@ -504,6 +463,7 @@ jobs:
         UploadToOculusReleaseChannel,
         UploadToUnityGameServerHosting,
         UploadToSteam,
+        UploadToGooglePlay,
       ]
     steps:
       - name: Set SHARE_STRING env
@@ -514,10 +474,15 @@ jobs:
         run: |
           echo "SHARE_STRING=&#x1F381; $UNITY_CLOUD_BUILD_TARGET $SHARE_URL" >> "$GITHUB_ENV"
 
+      - name: Set Unity Cloud Build Status String
+        env:
+          STATUS_STRING: ${{ inputs.UnityCloudBuildTarget }} ${{ needs.Build.result == 'success' && '&#x2705;' || '&#x274c;' }} ${{ needs.Build.result }}
+        run: |
+          echo UNITY_CLOUD_BUILD_STATUS_STRING="$STATUS_STRING" >> "$GITHUB_ENV"
       - name: Set TESTFLIGHTRESULT_STRING env
         if: ${{ inputs.UploadToTestFlight }}
         env:
-          TF_RESULT_STRING: ${{ needs.UploadToTestFlight.result == 'success' && ':green_heart:' || ':x:' }} ${{ needs.UploadToTestFlight.result }}
+          TF_RESULT_STRING: ${{ needs.UploadToTestFlight.result == 'success' && '&#x2705;' || '&#x274c;' }} ${{ needs.UploadToTestFlight.result }}
         run: |
           echo TESTFLIGHTRESULT_STRING="TestFlight $TF_RESULT_STRING " >> "$GITHUB_ENV"
 
@@ -541,6 +506,14 @@ jobs:
           OR_RESULT_STRING_TEAMS: ${{ needs.UploadToOculusReleaseChannel.result == 'success' && '&#x2705;' || '&#x274c;' }} ${{ needs.UploadToOculusReleaseChannel.result }}
         run: |
           echo OCULUSRELEASERESULT_STRING_TEAMS="$OR_RESULT_STRING_TEAMS " >> "$GITHUB_ENV"
+      
+      - name: Set Email Subject and Body For Google Play
+        if: ${{ inputs.UploadToGooglePlay }}
+        env:
+          GP_RESULT_STRING: ${{ needs.UploadToGooglePlay.result == 'success' && '&#x2705;' || '&#x274c;' }} ${{ needs.UploadToGooglePlay.result }}
+        run: |
+          echo "RESULT_SUBJECT=$(basename "$GITHUB_REPOSITORY") Android Build Status" >> "$GITHUB_ENV"
+          echo RESULT_BODY="$UNITY_CLOUD_BUILD_STATUS_STRING $GP_RESULT_STRING" >> "$GITHUB_ENV"
 
       - name: Set UNITYGAMEHOSTINGUPLOADRESULT_STRING env
         if: ${{ inputs.UploadToUnityGameServerHosting }}
@@ -635,14 +608,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PassedGithubToken }}
       - name: Send email
+        continue-on-error: true
         uses: dawidd6/action-send-mail@v4
         with:
           server_address: smtp.gmail.com
           server_port: 465
-          secure: false
+          secure: true
+          ignore_cert: true
           username: ${{secrets.EmailUsername}}
           password: ${{secrets.EmailPassword}}
-          subject: A new build is available
+          subject: ${{ env.RESULT_SUBJECT}}
           to: ${{inputs.EmailRecipients}}
           from: Build Automation
-          body: A build job was completed
+          body: ${{env.RESULT_BODY}}
