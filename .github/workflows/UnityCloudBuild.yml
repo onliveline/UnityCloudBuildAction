@@ -464,7 +464,7 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GoogleServiceAccount }}
-          packageName: ${{ inputs.APP_PACKAGE_NAME }}
+          packageName: ${{ inputs.AppPackageName }}
           releaseFiles: ${{ env.ARTIFACT_FILENAME }}
           track: ${{inputs.GooglePlayTrack}}
 
