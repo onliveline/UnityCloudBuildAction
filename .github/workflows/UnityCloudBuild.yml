@@ -262,10 +262,20 @@ jobs:
       ARTIFACT_FILENAME: ${{ needs.Build.outputs.artifact_filename }}
 
     steps:
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.ARTIFACT_FILENAME }}
+      # - name: Download Build Artifact
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: ${{ env.ARTIFACT_FILENAME }}
+      - name: Download App Bundle from Unity Cloud Share
+        env:
+          SHARE_DOWNLOAD_URL: ${{needs.Build.outputs.share_download_url}}
+          DOWNLOAD_DIR: "download_folder"
+        run: |
+          mkdir -p "$DOWNLOAD_DIR"
+          cd "$DOWNLOAD_DIR"
+          wget --content-disposition $SHARE_DOWNLOAD_URL
+          FILE_NAME=$(ls)
+          echo "ARTIFACT_FILENAME=$DOWNLOAD_DIR/$FILE_NAME" >> $GITHUB_ENV
 
       - name: Upload app to TestFlight
         uses: Apple-Actions/upload-testflight-build@v3.0.0
