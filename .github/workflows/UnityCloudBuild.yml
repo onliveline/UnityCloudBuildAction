@@ -94,6 +94,10 @@ on:
       GooglePlayTrack:
         required: false
         type: string
+
+      GooglePlayReleaseStatus:
+        required: false
+        type: string
       
       GooglePlayTestUrl:
         required: false
@@ -470,6 +474,7 @@ jobs:
           packageName: ${{ inputs.AppPackageName }}
           releaseFiles: ${{ env.ARTIFACT_FILENAME }}
           track: ${{inputs.GooglePlayTrack}}
+          status: ${{ inputs.GooglePlayReleaseStatus }}
 
   ReportToSlack:
     runs-on: ubuntu-22.04
