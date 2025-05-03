@@ -263,6 +263,17 @@ class UnityCloudClient:
     def get_share_url_from_share_id(self, share_id:str ) -> str:
         base_url = "https://cloud.unity.com/public/build-automation/share"
         return f"{base_url}?shareId={share_id}"
+    
+    def get_share_id_from_share_url(self, share_url:str) -> str:
+        return share_url.split("shareId=")[-1]
+    
+    def get_primary_link_from_share_url(self, share_url:str):
+        share_id = self.get_share_id_from_share_url(share_url)
+        url = f"{self.api_base_url}/shares/{share_id}"
+        response = requests.get(url)
+        data = response.json()
+        return data['links']['download_primary']['href']
+
 
     def create_share_url(self, project_id:str, build_target_name: str,build_number: int) -> str:
         # if a share already exists for this build, it will be revoked and a new one created (note: same url as GET share meta)
@@ -706,7 +717,9 @@ def main(
     if create_share:
         share_url = client.get_or_create_share_url( project_id, build_target_name, build_number )
         logger.info(f"Got sharing url {share_url}")
+        download_url = client.get_primary_link_from_share_url(share_url)
         write_github_output_and_env("SHARE_URL", share_url)
+        write_github_output_and_env("SHARE_DOWNLOAD_URL", download_url)
             
     sys.exit(0)
 

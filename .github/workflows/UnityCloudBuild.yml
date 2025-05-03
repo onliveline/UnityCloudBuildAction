@@ -98,6 +98,10 @@ on:
       GooglePlayTestUrl:
         required: false
         type: string
+      
+      AppPackageName:
+        required: false
+        type: string
 
       TeamsWebhook:
         required: false
@@ -160,6 +164,7 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       share_url: ${{ steps.build.outputs.SHARE_URL }}
+      share_download_url: ${{ steps.build.outputs.SHARE_DOWNLOAD_URL }}
       artifact_filepath: ${{ steps.build.outputs.ARTIFACT_FILEPATH }}
       artifact_filename: ${{ steps.build.outputs.ARTIFACT_FILENAME }}
 
@@ -183,14 +188,14 @@ jobs:
           unity_cloud_build_github_commit_sha: ${{ github.sha }}
           unity_cloud_build_use_existing_build_number: ${{ inputs.UnityCloudExistingBuildNumber }}
 
-      - name: Store binary as artifact
-        if: ${{ inputs.DownloadBinaryToArtifact || inputs.UploadToTestFlight || inputs.UploadToMacosTestFlight || inputs.UploadToOculusReleaseChannel || inputs.UploadToUnityGameServerHosting || inputs.UploadToSteam || inputs.UploadToGooglePlay }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.build.outputs.ARTIFACT_FILENAME }}
-          path: ${{ steps.build.outputs.ARTIFACT_FILEPATH }}
-          if-no-files-found: error
-          retention-days: 1
+      # - name: Store binary as artifact
+      #   if: ${{ inputs.DownloadBinaryToArtifact || inputs.UploadToTestFlight || inputs.UploadToMacosTestFlight || inputs.UploadToOculusReleaseChannel || inputs.UploadToUnityGameServerHosting || inputs.UploadToSteam || inputs.UploadToGooglePlay }}
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: ${{ steps.build.outputs.ARTIFACT_FILENAME }}
+      #     path: ${{ steps.build.outputs.ARTIFACT_FILEPATH }}
+      #     if-no-files-found: error
+      #     retention-days: 1
 
   UploadToMacosTestFlight:
     if: ${{ inputs.UploadToMacosTestFlight }}
@@ -441,17 +446,25 @@ jobs:
     needs: Build
     env:
       ARTIFACT_FILENAME: ${{ needs.Build.outputs.artifact_filename }}
+      SHARE_URL: ${{ needs.Build.outputs.share_url }}
 
     steps:
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.ARTIFACT_FILENAME }}
+      # - name: Download Build Artifact
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: ${{ env.ARTIFACT_FILENAME }}
+      - name: Download App Bundle from Unity Cloud Share
+        env:
+          SHARE_DOWNLOAD_URL: ${{needs.Build.outputs.share_download_url}}
+          ARTIFACT_FILE_NAME: "build_artifact"
+        run: |
+          wget -O $ARTIFACT_FILE_NAME $SHARE_DOWNLOAD_URL
+          echo "ARTIFACT_FILE_NAME=$ARTIFACT_FILE_NAME" >> $GITHUB_ENV
       - name: Upload to Google Play
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GoogleServiceAccount }}
-          packageName: de.onxt.BoneEaters
+          packageName: ${{ inputs.APP_PACKAGE_NAME }}
           releaseFiles: ${{ env.ARTIFACT_FILENAME }}
           track: ${{inputs.GooglePlayTrack}}
 
