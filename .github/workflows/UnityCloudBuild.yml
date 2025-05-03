@@ -456,10 +456,13 @@ jobs:
       - name: Download App Bundle from Unity Cloud Share
         env:
           SHARE_DOWNLOAD_URL: ${{needs.Build.outputs.share_download_url}}
-          ARTIFACT_FILENAME: "build_artifact"
+          DOWNLOAD_DIR: "download_folder"
         run: |
-          wget -O $ARTIFACT_FILENAME $SHARE_DOWNLOAD_URL
-          echo "ARTIFACT_FILENAME=$ARTIFACT_FILENAME" >> $GITHUB_ENV
+          mkdir -p "$DOWNLOAD_DIR"
+          cd "$DOWNLOAD_DIR"
+          wget --content-disposition $SHARE_DOWNLOAD_URL
+          FILE_NAME=$(ls)
+          echo "ARTIFACT_FILENAME=$DOWNLOAD_DIR/$ARTIFACT_FILENAME" >> $GITHUB_ENV
       - name: Upload to Google Play
         uses: r0adkll/upload-google-play@v1
         with:

@@ -274,7 +274,6 @@ class UnityCloudClient:
         data = response.json()
         return data['links']['download_primary']['href']
 
-
     def create_share_url(self, project_id:str, build_target_name: str,build_number: int) -> str:
         # if a share already exists for this build, it will be revoked and a new one created (note: same url as GET share meta)
         create_share_url = f"/projects/{project_id}/buildtargets/{build_target_name}/builds/{build_number}/share"
